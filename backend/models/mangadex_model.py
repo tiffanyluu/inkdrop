@@ -1,5 +1,5 @@
+from datetime import datetime
 from typing import Literal
-
 from pydantic import BaseModel, Field
 
 
@@ -43,3 +43,30 @@ class Manga(BaseModel):
                     return None
                 cover_filename = relationship.attributes["fileName"]
                 return f"https://uploads.mangadex.org/covers/{self.id}/{cover_filename}"
+
+
+class ChapterAttributes(BaseModel):
+    chapter: str | None
+    title: str | None
+    external_url: str | None = Field(alias="externalUrl")
+    readable_at: datetime | None = Field(alias="readableAt")
+
+
+class Chapter(BaseModel):
+    id: str
+    attributes: ChapterAttributes
+
+
+class ChapterFeed(BaseModel):
+    data: list[Chapter]
+    limit: int
+    offset: int
+    total: int
+
+    @property
+    def latest_free_chapter(self) -> Chapter | None:
+        for chapter in self.data:
+            if chapter.attributes.external_url is None:
+                return chapter.attributes.chapter
+
+        return chapter

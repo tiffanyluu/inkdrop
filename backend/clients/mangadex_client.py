@@ -1,12 +1,7 @@
-# 0184c74d-5c59-45db-83dd-c00456cf6fe3
-
-import json
-
 import httpx
 import asyncio
 from fastapi import HTTPException
-
-from models.mangadex_model import Manga
+from models.mangadex_model import Manga, ChapterFeed
 
 
 class MangadexClient:
@@ -43,8 +38,13 @@ class MangadexClient:
         manga = Manga.model_validate(response["data"])
         return manga
 
-    async def get_chapter(self, source_id: str, params: dict | None = None) -> dict:
-        return await self._get(f"/manga/{source_id}/feed", params=params)
+    async def get_chapters(self, source_id: str) -> ChapterFeed:
+        response = await self._get(
+            f"/manga/{source_id}/feed",
+            params={"translatedLanguage[]": "en", "order[chapter]": "desc"},
+        )
+        chapters = ChapterFeed.model_validate(response)
+        return chapters
 
 
 if __name__ == "__main__":
@@ -52,14 +52,10 @@ if __name__ == "__main__":
     async def test():
         client = MangadexClient()
         try:
-            # manga = await client.get_chapter(
-            #     "0184c74d-5c59-45db-83dd-c00456cf6fe3",
-            #     params={"translatedLanguage[]": "en", "order[chapter]": "desc"},
-            # )
-            manga = await client.get_manga(
-                "0184c74d-5c59-45db-83dd-c00456cf6fe3",
-            )
-            print(manga.model_dump_json(indent=2))
+            chapter = await client.get_chapters("0184c74d-5c59-45db-83dd-c00456cf6fe3")
+            print(chapter.model_dump_json(indent=2))
+            # manga = await client.get_manga("0184c74d-5c59-45db-83dd-c00456cf6fe3")
+            # print(manga.model_dump_json(indent=2))
         finally:
             await client.close()
 
