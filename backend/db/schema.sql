@@ -32,7 +32,8 @@ CREATE TYPE public.sources_type_enum AS ENUM (
 CREATE TYPE public.title_status_enum AS ENUM (
     'ONGOING',
     'COMPLETED',
-    'HIATUS'
+    'HIATUS',
+    'CANCELED'
 );
 
 
@@ -137,7 +138,8 @@ CREATE TABLE public.titles (
     image_url text,
     title_status public.title_status_enum NOT NULL,
     create_datetime timestamp with time zone DEFAULT now() NOT NULL,
-    modified_datetime timestamp with time zone
+    modified_datetime timestamp with time zone,
+    description text
 );
 
 
@@ -350,4 +352,6 @@ ALTER TABLE ONLY public.title_sources
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20261111210633');
+    ('20261111210633'),
+    ('20261112024443'),
+    ('20261112024829');

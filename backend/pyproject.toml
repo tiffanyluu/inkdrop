@@ -2,4 +2,9 @@
 name = "inkdrop-backend"
 version = "0.1.0"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "asyncpg>=0.32.0",
+    "fastapi[standard]>=0.162.5",
+    "httpx>=0.28.1",
+    "pydantic-settings>=2.16.2",
+]
