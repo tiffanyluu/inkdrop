@@ -1,6 +1,9 @@
 from fastapi import Depends, FastAPI, Request
 from config import get_settings
 from contextlib import asynccontextmanager
+from clients import MangadexClient
+from dependencies import get_db_pool
+from routes import titles_routes
 import asyncpg
 
 
@@ -9,15 +12,15 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
 
     app.state.pool = await asyncpg.create_pool(dsn=str(settings.database_url))
+    app.state.mangadex_client = MangadexClient()
     yield
+    await app.state.mangadex_client.close()
     await app.state.pool.close()
 
 
 app = FastAPI(lifespan=lifespan)
 
-
-async def get_db_pool(request: Request) -> asyncpg.Pool:
-    return request.app.state.pool
+app.include_router(titles_routes.router)
 
 
 @app.get("/health")

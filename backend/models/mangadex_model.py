@@ -23,6 +23,15 @@ class MangaAttributes(BaseModel):
         else:
             return next(iter(self.title.values()))
 
+    @property
+    def display_description(self) -> str | None:
+        if not self.description:
+            return None
+        elif "en" in self.description:
+            return self.description["en"]
+        else:
+            return next(iter(self.description.values()))
+
 
 class MangaRelationship(BaseModel):
     id: str
@@ -36,7 +45,7 @@ class Manga(BaseModel):
     relationships: list[MangaRelationship]
 
     @property
-    def cover_image_url(self) -> str | None:
+    def cover_url(self) -> str | None:
         for relationship in self.relationships:
             if relationship.type == "cover_art":
                 if relationship.attributes is None:
@@ -67,6 +76,6 @@ class ChapterFeed(BaseModel):
     def latest_free_chapter(self) -> Chapter | None:
         for chapter in self.data:
             if chapter.attributes.external_url is None:
-                return chapter.attributes.chapter
+                return chapter
 
-        return chapter
+        return None
