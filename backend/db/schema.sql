@@ -56,12 +56,21 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: follows; Type: TABLE; Schema: public; Owner: -
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.follows (
+CREATE TABLE public.schema_migrations (
+    version character varying NOT NULL
+);
+
+
+--
+-- Name: subscriptions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.subscriptions (
     id bigint NOT NULL,
-    follow_public_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    subscription_public_id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_row_id bigint NOT NULL,
     title_row_id bigint NOT NULL,
     latest_read_chapter numeric,
@@ -73,25 +82,16 @@ CREATE TABLE public.follows (
 
 
 --
--- Name: follows_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.follows ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.follows_id_seq
+ALTER TABLE public.subscriptions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.subscriptions_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
-);
-
-
---
--- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.schema_migrations (
-    version character varying NOT NULL
 );
 
 
@@ -188,35 +188,35 @@ ALTER TABLE public.users ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
--- Name: follows follows_follow_public_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.follows
-    ADD CONSTRAINT follows_follow_public_id_key UNIQUE (follow_public_id);
-
-
---
--- Name: follows follows_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.follows
-    ADD CONSTRAINT follows_pkey PRIMARY KEY (id);
-
-
---
--- Name: follows follows_user_row_id_title_row_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.follows
-    ADD CONSTRAINT follows_user_row_id_title_row_id_key UNIQUE (user_row_id, title_row_id);
-
-
---
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: subscriptions subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.subscriptions
+    ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: subscriptions subscriptions_subscription_public_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.subscriptions
+    ADD CONSTRAINT subscriptions_subscription_public_id_key UNIQUE (subscription_public_id);
+
+
+--
+-- Name: subscriptions subscriptions_user_row_id_title_row_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.subscriptions
+    ADD CONSTRAINT subscriptions_user_row_id_title_row_id_key UNIQUE (user_row_id, title_row_id);
 
 
 --
@@ -268,10 +268,10 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: follows_title_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: subscriptions_title_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX follows_title_idx ON public.follows USING btree (title_row_id);
+CREATE INDEX subscriptions_title_idx ON public.subscriptions USING btree (title_row_id);
 
 
 --
@@ -289,10 +289,10 @@ CREATE UNIQUE INDEX users_email_lower_idx ON public.users USING btree (lower((em
 
 
 --
--- Name: follows trigger_follows_modified_datetime; Type: TRIGGER; Schema: public; Owner: -
+-- Name: subscriptions trigger_subscriptions_modified_datetime; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trigger_follows_modified_datetime BEFORE UPDATE ON public.follows FOR EACH ROW EXECUTE FUNCTION public.set_modified_datetime();
+CREATE TRIGGER trigger_subscriptions_modified_datetime BEFORE UPDATE ON public.subscriptions FOR EACH ROW EXECUTE FUNCTION public.set_modified_datetime();
 
 
 --
@@ -317,19 +317,19 @@ CREATE TRIGGER trigger_users_modified_datetime BEFORE UPDATE ON public.users FOR
 
 
 --
--- Name: follows follows_title_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: subscriptions subscriptions_title_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.follows
-    ADD CONSTRAINT follows_title_row_id_fkey FOREIGN KEY (title_row_id) REFERENCES public.titles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.subscriptions
+    ADD CONSTRAINT subscriptions_title_row_id_fkey FOREIGN KEY (title_row_id) REFERENCES public.titles(id) ON DELETE CASCADE;
 
 
 --
--- Name: follows follows_user_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: subscriptions subscriptions_user_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.follows
-    ADD CONSTRAINT follows_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.subscriptions
+    ADD CONSTRAINT subscriptions_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -355,4 +355,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261111210633'),
     ('20261112024443'),
     ('20261112024829'),
-    ('20261112165303');
+    ('20261112165303'),
+    ('20261113042306');
