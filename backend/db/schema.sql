@@ -21,7 +21,7 @@ SET row_security = off;
 
 CREATE TYPE public.sources_type_enum AS ENUM (
     'MANGADEX',
-    'ATHREA_SCANS'
+    'ATHREA'
 );
 
 
@@ -135,7 +135,7 @@ CREATE TABLE public.titles (
     id bigint NOT NULL,
     title_public_id uuid DEFAULT gen_random_uuid() NOT NULL,
     title_name character varying(255) NOT NULL,
-    image_url text,
+    cover_url text,
     title_status public.title_status_enum NOT NULL,
     create_datetime timestamp with time zone DEFAULT now() NOT NULL,
     modified_datetime timestamp with time zone,
@@ -354,4 +354,5 @@ ALTER TABLE ONLY public.title_sources
 INSERT INTO public.schema_migrations (version) VALUES
     ('20261111210633'),
     ('20261112024443'),
-    ('20261112024829');
+    ('20261112024829'),
+    ('20261112165303');
