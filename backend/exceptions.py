@@ -1,0 +1,2 @@
+class SourceNotFoundError(Exception):
+    pass
