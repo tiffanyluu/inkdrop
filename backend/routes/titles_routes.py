@@ -1,50 +1,58 @@
-from typing import Literal
+from typing import Annotated
 from uuid import UUID
 
-from asyncpg import Pool
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from controllers.titles_controller import add_title, refresh_title_source
-from dependencies import get_db_pool, get_mangadex_client
-from clients import MangadexClient
-from exceptions import SourceNotFoundError
 
-router = APIRouter(prefix="/titles")
+from clients import MangadexClient
+from controllers import titles_controller
+from dependencies import DbPool, get_current_user, get_mangadex_client
+from exceptions import SourceNotFoundError
+from models.common import SourceType
+
+router = APIRouter(prefix="/titles", dependencies=[Depends(get_current_user)])
 
 
 class TitleRequest(BaseModel):
     source_id: str
-    source_type: Literal["MANGADEX", "ATHREA"]
+    source_type: SourceType
 
 
 class TitleResponse(BaseModel):
-    id: UUID
+    title_public_id: UUID
 
 
-@router.post("", response_model=TitleResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_title(
     title: TitleRequest,
-    client: MangadexClient = Depends(get_mangadex_client),
-    pool: Pool = Depends(get_db_pool),
-):
+    client: Annotated[MangadexClient, Depends(get_mangadex_client)],
+    pool: DbPool,
+) -> TitleResponse:
     if title.source_type != "MANGADEX":
-        raise HTTPException(status_code=400, detail="not supported yet")
+        raise HTTPException(status_code=400, detail="Not supported yet")
     async with pool.acquire() as conn:
-        title_id = await add_title(conn, client, title.source_type, title.source_id)
-        return TitleResponse(id=title_id)
+        title_public_id = await titles_controller.add_title(
+            conn,
+            client,
+            title.source_id,
+            title.source_type,
+        )
+        return TitleResponse(title_public_id=title_public_id)
 
 
 @router.post("/refresh", status_code=status.HTTP_204_NO_CONTENT)
 async def refresh_title(
     title: TitleRequest,
-    client: MangadexClient = Depends(get_mangadex_client),
-    pool: Pool = Depends(get_db_pool),
-):
+    client: Annotated[MangadexClient, Depends(get_mangadex_client)],
+    pool: DbPool,
+) -> None:
     if title.source_type != "MANGADEX":
-        raise HTTPException(status_code=400, detail="not supported yet")
+        raise HTTPException(status_code=400, detail="Not supported yet")
     try:
         async with pool.acquire() as conn:
-            await refresh_title_source(conn, client, title.source_id, title.source_type)
+            await titles_controller.refresh_title_source(
+                conn, client, title.source_id, title.source_type
+            )
     except SourceNotFoundError as e:
         raise HTTPException(
             status_code=404,

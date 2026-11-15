@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
+
 from asyncpg import Connection, Record
 
 
@@ -26,9 +27,9 @@ async def create_title(
 
 async def create_title_source(
     conn: Connection,
-    title_id: int,
-    source_type: str,
+    title_row_id: int,
     source_id: str,
+    source_type: str,
     latest_free_chapter: Decimal | None,
     latest_free_chapter_datetime: datetime | None,
 ) -> None:
@@ -39,7 +40,7 @@ async def create_title_source(
         )
         VALUES ($1, $2, $3, $4, $5)
         """,
-        title_id,
+        title_row_id,
         source_id,
         source_type,
         latest_free_chapter,
@@ -48,7 +49,9 @@ async def create_title_source(
 
 
 async def get_title_by_source(
-    conn: Connection, source_type: str, source_id: str
+    conn: Connection,
+    source_id: str,
+    source_type: str,
 ) -> UUID | None:
     return await conn.fetchval(
         """

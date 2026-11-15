@@ -158,6 +158,33 @@ ALTER TABLE public.titles ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
+-- Name: user_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_sessions (
+    id bigint NOT NULL,
+    token_hash character varying(64) NOT NULL,
+    user_row_id bigint NOT NULL,
+    create_datetime timestamp with time zone DEFAULT now() NOT NULL,
+    expiration_datetime timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: user_sessions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.user_sessions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.user_sessions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -252,6 +279,22 @@ ALTER TABLE ONLY public.titles
 
 
 --
+-- Name: user_sessions user_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_sessions
+    ADD CONSTRAINT user_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_sessions user_sessions_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_sessions
+    ADD CONSTRAINT user_sessions_token_hash_key UNIQUE (token_hash);
+
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -268,24 +311,38 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: subscriptions_title_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_subscriptions_title; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX subscriptions_title_idx ON public.subscriptions USING btree (title_row_id);
-
-
---
--- Name: title_sources_title_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX title_sources_title_idx ON public.title_sources USING btree (title_row_id);
+CREATE INDEX idx_subscriptions_title ON public.subscriptions USING btree (title_row_id);
 
 
 --
--- Name: users_email_lower_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_title_sources_title; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX users_email_lower_idx ON public.users USING btree (lower((email)::text));
+CREATE INDEX idx_title_sources_title ON public.title_sources USING btree (title_row_id);
+
+
+--
+-- Name: idx_user_sessions_expiration_datetime; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_sessions_expiration_datetime ON public.user_sessions USING btree (expiration_datetime);
+
+
+--
+-- Name: idx_user_sessions_user_row_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_sessions_user_row_id ON public.user_sessions USING btree (user_row_id);
+
+
+--
+-- Name: idx_users_email_lower; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_users_email_lower ON public.users USING btree (lower((email)::text));
 
 
 --
@@ -341,6 +398,14 @@ ALTER TABLE ONLY public.title_sources
 
 
 --
+-- Name: user_sessions user_sessions_user_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_sessions
+    ADD CONSTRAINT user_sessions_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
@@ -356,4 +421,6 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261112024443'),
     ('20261112024829'),
     ('20261112165303'),
-    ('20261113042306');
+    ('20261113042306'),
+    ('20261114223258'),
+    ('20261114230549');

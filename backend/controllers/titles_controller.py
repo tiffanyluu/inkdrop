@@ -1,13 +1,14 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Literal
 from uuid import UUID
 
-from asyncpg import UniqueViolationError, Connection
-from models.mangadex_model import ChapterFeed
-from db import titles_db
+from asyncpg import Connection, UniqueViolationError
+
 from clients import MangadexClient
+from db import titles_db
 from exceptions import SourceNotFoundError
+from models.common import SourceType
+from models.mangadex_model import ChapterFeed
 
 
 def get_latest_available_chapter_info(
@@ -27,10 +28,10 @@ def get_latest_available_chapter_info(
 async def add_title(
     conn: Connection,
     client: MangadexClient,
-    source_type: Literal["MANGADEX", "ATHREA"],
     source_id: str,
+    source_type: SourceType,
 ) -> UUID:
-    title_public_id = await titles_db.get_title_by_source(conn, source_type, source_id)
+    title_public_id = await titles_db.get_title_by_source(conn, source_id, source_type)
     if title_public_id is not None:
         return title_public_id
 
@@ -43,13 +44,13 @@ async def add_title(
         else "CANCELED"
     )
 
-    [latest_free_chapter, latest_free_chapter_datetime] = (
+    latest_free_chapter, latest_free_chapter_datetime = (
         get_latest_available_chapter_info(chapters)
     )
 
     try:
         async with conn.transaction():
-            [title_row_id, title_public_id] = await titles_db.create_title(
+            title_row_id, title_public_id = await titles_db.create_title(
                 conn,
                 manga.attributes.display_title,
                 manga_status,
@@ -59,14 +60,14 @@ async def add_title(
 
             await titles_db.create_title_source(
                 conn,
-                title_id=title_row_id,
-                source_type=source_type,
-                source_id=source_id,
-                latest_free_chapter=latest_free_chapter,
-                latest_free_chapter_datetime=latest_free_chapter_datetime,
+                title_row_id,
+                source_id,
+                source_type,
+                latest_free_chapter,
+                latest_free_chapter_datetime,
             )
     except UniqueViolationError:
-        return await titles_db.get_title_by_source(conn, source_type, source_id)
+        return await titles_db.get_title_by_source(conn, source_id, source_type)
 
     return title_public_id
 
@@ -75,7 +76,7 @@ async def refresh_title_source(
     conn: Connection,
     client: MangadexClient,
     source_id: str,
-    source_type: Literal["MANGADEX", "ATHREA"],
+    source_type: SourceType,
 ) -> None:
     row = await titles_db.get_source_by_source_id_type(conn, source_id, source_type)
 
@@ -88,7 +89,7 @@ async def refresh_title_source(
 
     chapters = await client.get_chapters(source_id)
 
-    [latest_free_chapter, latest_free_chapter_datetime] = (
+    latest_free_chapter, latest_free_chapter_datetime = (
         get_latest_available_chapter_info(chapters)
     )
 
@@ -99,11 +100,11 @@ async def refresh_title_source(
 
     if has_new_chapter:
         await titles_db.update_latest_chapter(
-            conn=conn,
-            source_id=source_id,
-            source_type=source_type,
-            latest_free_chapter=latest_free_chapter,
-            latest_free_chapter_datetime=latest_free_chapter_datetime,
+            conn,
+            source_id,
+            source_type,
+            latest_free_chapter,
+            latest_free_chapter_datetime,
         )
 
     await titles_db.update_last_checked_datetime(conn, source_id, source_type)
