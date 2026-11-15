@@ -8,19 +8,3 @@ class EmailAlreadyExistsError(Exception):
 
 class InvalidCredentialsError(Exception):
     pass
-
-
-class MangadexError(Exception):
-    pass
-
-
-class MangadexNotFoundError(MangadexError):
-    pass
-
-
-class MangadexTimeoutError(MangadexError):
-    pass
-
-
-class MangadexUnavailableError(MangadexError):
-    pass

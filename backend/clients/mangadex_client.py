@@ -1,13 +1,8 @@
 import asyncio
 
+from fastapi import HTTPException
 from httpx import AsyncClient, HTTPStatusError, RequestError, Timeout, TimeoutException
 
-from exceptions import (
-    MangadexError,
-    MangadexNotFoundError,
-    MangadexTimeoutError,
-    MangadexUnavailableError,
-)
 from models.mangadex_model import ChapterFeed, Manga
 
 
@@ -27,18 +22,16 @@ class MangadexClient:
             response = await self.client.get(path, params=params)
             response.raise_for_status()
             return response.json()
-        except TimeoutException as e:
-            raise MangadexTimeoutError("MangaDex API timed out") from e
+        except TimeoutException:
+            raise HTTPException(status_code=504, detail="MangaDex API timed out")
         except HTTPStatusError as e:
-            status_code = e.response.status_code
             request_id = e.response.headers.get("X-Request-ID", "N/A")
-            if status_code == 404:
-                raise MangadexNotFoundError(f"Not found on MangaDex: {path}") from e
-            raise MangadexError(
-                f"MangaDex returned {status_code} (Request ID: {request_id})"
-            ) from e
-        except RequestError as e:
-            raise MangadexUnavailableError("Unable to reach MangaDex") from e
+            raise HTTPException(
+                status_code=e.response.status_code,
+                detail=f"MangaDex error (Request ID: {request_id}): {e.response.text}",
+            )
+        except RequestError:
+            raise HTTPException(status_code=502, detail="Unable to reach MangaDex")
 
     async def get_manga(self, source_id: str) -> Manga:
         response = await self._get(
