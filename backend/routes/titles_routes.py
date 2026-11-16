@@ -8,7 +8,7 @@ from clients import MangadexClient
 from controllers import titles_controller
 from dependencies import DbPool, get_current_user, get_mangadex_client
 from exceptions import SourceNotFoundError
-from models.common import SourceType
+from models import SourceType
 
 router = APIRouter(prefix="/titles", dependencies=[Depends(get_current_user)])
 
@@ -31,7 +31,7 @@ async def create_title(
     if title.source_type != "MANGADEX":
         raise HTTPException(status_code=400, detail="Not supported yet")
     async with pool.acquire() as conn:
-        title_public_id = await titles_controller.add_title(
+        _, title_public_id = await titles_controller.add_title(
             conn,
             client,
             title.source_id,

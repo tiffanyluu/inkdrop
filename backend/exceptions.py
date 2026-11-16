@@ -8,3 +8,7 @@ class EmailAlreadyExistsError(Exception):
 
 class InvalidCredentialsError(Exception):
     pass
+
+
+class SubscriptionNotFoundError(Exception):
+    pass

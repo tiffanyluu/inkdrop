@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from clients import MangadexClient
 from config import get_settings
 from dependencies import DbPool
-from routes import auth_routes, titles_routes
+from routes import auth_routes, subscriptions_routes, titles_routes
 
 
 @asynccontextmanager
@@ -24,6 +24,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(titles_routes.router)
 app.include_router(auth_routes.router)
+app.include_router(subscriptions_routes.router)
 
 
 @app.get("/health")

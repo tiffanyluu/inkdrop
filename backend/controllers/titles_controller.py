@@ -7,8 +7,7 @@ from asyncpg import Connection, UniqueViolationError
 from clients import MangadexClient
 from db import titles_db
 from exceptions import SourceNotFoundError
-from models.common import SourceType
-from models.mangadex_model import ChapterFeed
+from models import ChapterFeed, SourceType
 
 
 def get_latest_available_chapter_info(
@@ -30,10 +29,11 @@ async def add_title(
     client: MangadexClient,
     source_id: str,
     source_type: SourceType,
-) -> UUID:
-    title_public_id = await titles_db.get_title_by_source(conn, source_id, source_type)
-    if title_public_id is not None:
-        return title_public_id
+) -> tuple[int, UUID]:
+    row = await titles_db.get_title_by_source(conn, source_id, source_type)
+
+    if row is not None:
+        return row["id"], row["title_public_id"]
 
     manga = await client.get_manga(source_id)
     chapters = await client.get_chapters(source_id)
@@ -67,9 +67,10 @@ async def add_title(
                 latest_free_chapter_datetime,
             )
     except UniqueViolationError:
-        return await titles_db.get_title_by_source(conn, source_id, source_type)
+        row = await titles_db.get_title_by_source(conn, source_id, source_type)
+        return row["id"], row["title_public_id"]
 
-    return title_public_id
+    return title_row_id, title_public_id
 
 
 async def refresh_title_source(
