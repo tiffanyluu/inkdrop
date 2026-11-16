@@ -34,3 +34,6 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user
+
+
+CurrentUser = Annotated[Record, Depends(get_current_user)]

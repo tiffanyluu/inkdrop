@@ -1,6 +1,5 @@
 from datetime import datetime
 from decimal import Decimal
-from uuid import UUID
 
 from asyncpg import Connection, Record
 
@@ -52,10 +51,10 @@ async def get_title_by_source(
     conn: Connection,
     source_id: str,
     source_type: str,
-) -> UUID | None:
-    return await conn.fetchval(
+) -> Record | None:
+    return await conn.fetchrow(
         """
-        SELECT t.title_public_id FROM titles t JOIN title_sources s
+        SELECT t.id, t.title_public_id FROM titles t JOIN title_sources s
         ON t.id = s.title_row_id
         WHERE s.source_type = $1 AND s.source_id = $2
         """,

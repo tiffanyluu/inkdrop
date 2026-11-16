@@ -3,7 +3,7 @@ import asyncio
 from fastapi import HTTPException
 from httpx import AsyncClient, HTTPStatusError, RequestError, Timeout, TimeoutException
 
-from models.mangadex_model import ChapterFeed, Manga
+from models import ChapterFeed, Manga
 
 
 class MangadexClient:
