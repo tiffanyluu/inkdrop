@@ -12,3 +12,7 @@ class InvalidCredentialsError(Exception):
 
 class SubscriptionNotFoundError(Exception):
     pass
+
+
+class NotificationNotFoundError(Exception):
+    pass

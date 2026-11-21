@@ -5,7 +5,7 @@ from uuid import UUID
 from asyncpg import Connection, UniqueViolationError
 
 from clients import MangadexClient
-from db import titles_db
+from db import titles_db, notifications_db, subscriptions_db
 from exceptions import SourceNotFoundError
 from models import ChapterFeed, SourceType
 
@@ -33,7 +33,7 @@ async def add_title(
     row = await titles_db.get_title_by_source(conn, source_id, source_type)
 
     if row is not None:
-        return row["id"], row["title_public_id"]
+        return row["row_id"], row["title_public_id"]
 
     manga = await client.get_manga(source_id)
     chapters = await client.get_chapters(source_id)
@@ -68,7 +68,7 @@ async def add_title(
             )
     except UniqueViolationError:
         row = await titles_db.get_title_by_source(conn, source_id, source_type)
-        return row["id"], row["title_public_id"]
+        return row["row_id"], row["title_public_id"]
 
     return title_row_id, title_public_id
 
@@ -79,14 +79,16 @@ async def refresh_title_source(
     source_id: str,
     source_type: SourceType,
 ) -> None:
-    row = await titles_db.get_source_by_source_id_type(conn, source_id, source_type)
+    title_source = await titles_db.get_source_by_source_id_type(
+        conn, source_id, source_type
+    )
 
-    if row is None:
+    if title_source is None:
         raise SourceNotFoundError(
             f"No source found with source id {source_id} and source type {source_type}"
         )
 
-    stored_latest_free_chapter = row["latest_free_chapter"]
+    stored_latest_free_chapter = title_source["latest_free_chapter"]
 
     chapters = await client.get_chapters(source_id)
 
@@ -100,12 +102,19 @@ async def refresh_title_source(
     )
 
     if has_new_chapter:
-        await titles_db.update_latest_chapter(
-            conn,
-            source_id,
-            source_type,
-            latest_free_chapter,
-            latest_free_chapter_datetime,
-        )
+        async with conn.transaction():
+            await titles_db.update_latest_chapter(
+                conn,
+                source_id,
+                source_type,
+                latest_free_chapter,
+                latest_free_chapter_datetime,
+            )
+            await notifications_db.create_notifications(
+                conn, title_source["title_row_id"], latest_free_chapter
+            )
+            await subscriptions_db.update_latest_notified_chapter(
+                conn, title_source["title_row_id"], latest_free_chapter
+            )
 
     await titles_db.update_last_checked_datetime(conn, source_id, source_type)

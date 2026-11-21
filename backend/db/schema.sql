@@ -56,6 +56,35 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notifications (
+    row_id bigint NOT NULL,
+    notification_public_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    chapter numeric NOT NULL,
+    user_row_id bigint NOT NULL,
+    title_row_id bigint NOT NULL,
+    create_datetime timestamp with time zone DEFAULT now() NOT NULL,
+    seen_datetime timestamp with time zone
+);
+
+
+--
+-- Name: notifications_row_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.notifications ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.notifications_row_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -69,7 +98,7 @@ CREATE TABLE public.schema_migrations (
 --
 
 CREATE TABLE public.subscriptions (
-    id bigint NOT NULL,
+    row_id bigint CONSTRAINT subscriptions_id_not_null NOT NULL,
     subscription_public_id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_row_id bigint NOT NULL,
     title_row_id bigint NOT NULL,
@@ -85,7 +114,7 @@ CREATE TABLE public.subscriptions (
 -- Name: subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.subscriptions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+ALTER TABLE public.subscriptions ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.subscriptions_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -100,7 +129,7 @@ ALTER TABLE public.subscriptions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 --
 
 CREATE TABLE public.title_sources (
-    id bigint NOT NULL,
+    row_id bigint CONSTRAINT title_sources_id_not_null NOT NULL,
     source_id character varying(255) NOT NULL,
     title_row_id bigint NOT NULL,
     source_type public.sources_type_enum NOT NULL,
@@ -117,7 +146,7 @@ CREATE TABLE public.title_sources (
 -- Name: title_sources_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.title_sources ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+ALTER TABLE public.title_sources ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.title_sources_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -132,7 +161,7 @@ ALTER TABLE public.title_sources ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 --
 
 CREATE TABLE public.titles (
-    id bigint NOT NULL,
+    row_id bigint CONSTRAINT titles_id_not_null NOT NULL,
     title_public_id uuid DEFAULT gen_random_uuid() NOT NULL,
     title_name character varying(255) NOT NULL,
     cover_url text,
@@ -147,7 +176,7 @@ CREATE TABLE public.titles (
 -- Name: titles_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.titles ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+ALTER TABLE public.titles ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.titles_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -162,7 +191,7 @@ ALTER TABLE public.titles ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 --
 
 CREATE TABLE public.user_sessions (
-    id bigint NOT NULL,
+    row_id bigint CONSTRAINT user_sessions_id_not_null NOT NULL,
     token_hash character varying(64) NOT NULL,
     user_row_id bigint NOT NULL,
     create_datetime timestamp with time zone DEFAULT now() NOT NULL,
@@ -174,7 +203,7 @@ CREATE TABLE public.user_sessions (
 -- Name: user_sessions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.user_sessions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+ALTER TABLE public.user_sessions ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.user_sessions_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -189,7 +218,7 @@ ALTER TABLE public.user_sessions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 --
 
 CREATE TABLE public.users (
-    id bigint NOT NULL,
+    row_id bigint CONSTRAINT users_id_not_null NOT NULL,
     user_public_id uuid DEFAULT gen_random_uuid() NOT NULL,
     first_name character varying(50) NOT NULL,
     last_name character varying(50) NOT NULL,
@@ -204,7 +233,7 @@ CREATE TABLE public.users (
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.users ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+ALTER TABLE public.users ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.users_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -212,6 +241,30 @@ ALTER TABLE public.users ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     NO MAXVALUE
     CACHE 1
 );
+
+
+--
+-- Name: notifications notifications_notification_public_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_notification_public_id_key UNIQUE (notification_public_id);
+
+
+--
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (row_id);
+
+
+--
+-- Name: notifications notifications_user_row_id_title_row_id_chapter_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_row_id_title_row_id_chapter_key UNIQUE (user_row_id, title_row_id, chapter);
 
 
 --
@@ -227,7 +280,7 @@ ALTER TABLE ONLY public.schema_migrations
 --
 
 ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (row_id);
 
 
 --
@@ -251,7 +304,7 @@ ALTER TABLE ONLY public.subscriptions
 --
 
 ALTER TABLE ONLY public.title_sources
-    ADD CONSTRAINT title_sources_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT title_sources_pkey PRIMARY KEY (row_id);
 
 
 --
@@ -267,7 +320,7 @@ ALTER TABLE ONLY public.title_sources
 --
 
 ALTER TABLE ONLY public.titles
-    ADD CONSTRAINT titles_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT titles_pkey PRIMARY KEY (row_id);
 
 
 --
@@ -283,7 +336,7 @@ ALTER TABLE ONLY public.titles
 --
 
 ALTER TABLE ONLY public.user_sessions
-    ADD CONSTRAINT user_sessions_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT user_sessions_pkey PRIMARY KEY (row_id);
 
 
 --
@@ -299,7 +352,7 @@ ALTER TABLE ONLY public.user_sessions
 --
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT users_pkey PRIMARY KEY (row_id);
 
 
 --
@@ -374,11 +427,27 @@ CREATE TRIGGER trigger_users_modified_datetime BEFORE UPDATE ON public.users FOR
 
 
 --
+-- Name: notifications notifications_title_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_title_row_id_fkey FOREIGN KEY (title_row_id) REFERENCES public.titles(row_id) ON DELETE CASCADE;
+
+
+--
+-- Name: notifications notifications_user_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(row_id) ON DELETE CASCADE;
+
+
+--
 -- Name: subscriptions subscriptions_title_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_title_row_id_fkey FOREIGN KEY (title_row_id) REFERENCES public.titles(id) ON DELETE CASCADE;
+    ADD CONSTRAINT subscriptions_title_row_id_fkey FOREIGN KEY (title_row_id) REFERENCES public.titles(row_id) ON DELETE CASCADE;
 
 
 --
@@ -386,7 +455,7 @@ ALTER TABLE ONLY public.subscriptions
 --
 
 ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT subscriptions_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(row_id) ON DELETE CASCADE;
 
 
 --
@@ -394,7 +463,7 @@ ALTER TABLE ONLY public.subscriptions
 --
 
 ALTER TABLE ONLY public.title_sources
-    ADD CONSTRAINT title_sources_title_row_id_fkey FOREIGN KEY (title_row_id) REFERENCES public.titles(id) ON DELETE CASCADE;
+    ADD CONSTRAINT title_sources_title_row_id_fkey FOREIGN KEY (title_row_id) REFERENCES public.titles(row_id) ON DELETE CASCADE;
 
 
 --
@@ -402,7 +471,7 @@ ALTER TABLE ONLY public.title_sources
 --
 
 ALTER TABLE ONLY public.user_sessions
-    ADD CONSTRAINT user_sessions_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT user_sessions_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(row_id) ON DELETE CASCADE;
 
 
 --
@@ -423,4 +492,6 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261112165303'),
     ('20261113042306'),
     ('20261114223258'),
-    ('20261114230549');
+    ('20261114230549'),
+    ('20261121025829'),
+    ('20261121030229');

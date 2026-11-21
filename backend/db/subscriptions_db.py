@@ -50,10 +50,10 @@ async def list_subscriptions(conn: Connection, user_row_id: int) -> list[Record]
                 false
             ) AS has_new_chapter
         FROM subscriptions s
-        JOIN titles t ON s.title_row_id = t.id
-        JOIN title_sources ts ON t.id = ts.title_row_id
+        JOIN titles t ON s.title_row_id = t.row_id
+        JOIN title_sources ts ON t.row_id = ts.title_row_id
         WHERE s.user_row_id = $1
-        GROUP BY t.id, s.id
+        GROUP BY t.row_id, s.row_id
         ORDER BY
             MAX(ts.latest_free_chapter_datetime) DESC NULLS LAST,
             t.title_name ASC
@@ -95,4 +95,20 @@ async def delete_subscription(
         """,
         user_row_id,
         subscription_public_id,
+    )
+
+
+async def update_latest_notified_chapter(
+    conn: Connection,
+    title_row_id: int,
+    latest_notified_chapter: Decimal,
+) -> None:
+    await conn.execute(
+        """
+        UPDATE subscriptions
+        SET latest_notified_chapter = $2
+        WHERE title_row_id = $1 AND COALESCE(latest_notified_chapter, 0) < $2
+        """,
+        title_row_id,
+        latest_notified_chapter,
     )
