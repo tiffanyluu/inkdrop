@@ -20,7 +20,6 @@ async def add_subscription(
     title_row_id, _ = await titles_controller.add_title(
         conn, client, source_id, source_type
     )
-
     try:
         return await subscriptions_db.create_subscription(
             conn,

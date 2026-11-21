@@ -20,7 +20,7 @@ async def create_user(
 async def get_user_by_email(conn: Connection, email: str) -> Record | None:
     return await conn.fetchrow(
         """
-        SELECT id, password_hash
+        SELECT row_id, password_hash
         FROM users WHERE lower(email) = $1
         """,
         email,

@@ -53,7 +53,7 @@ async def login_user(
     hashed_token = utils.hash_token(token)
 
     await sessions_db.create_session(
-        conn, user["id"], hashed_token, datetime.now(UTC) + session_duration
+        conn, user["row_id"], hashed_token, datetime.now(UTC) + session_duration
     )
 
     return token

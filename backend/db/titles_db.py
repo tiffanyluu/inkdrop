@@ -15,7 +15,7 @@ async def create_title(
         """
         INSERT INTO titles (title_name, cover_url, title_status, description)
         VALUES ($1, $2, $3, $4)
-        RETURNING id, title_public_id
+        RETURNING row_id, title_public_id
         """,
         name,
         cover_url,
@@ -54,9 +54,9 @@ async def get_title_by_source(
 ) -> Record | None:
     return await conn.fetchrow(
         """
-        SELECT t.id, t.title_public_id FROM titles t JOIN title_sources s
-        ON t.id = s.title_row_id
-        WHERE s.source_type = $1 AND s.source_id = $2
+        SELECT t.row_id, t.title_public_id FROM titles t JOIN title_sources ts
+        ON t.row_id = ts.title_row_id
+        WHERE ts.source_type = $1 AND ts.source_id = $2
         """,
         source_type,
         source_id,
@@ -68,8 +68,8 @@ async def get_source_by_source_id_type(
 ) -> Record | None:
     return await conn.fetchrow(
         """
-        SELECT s.latest_free_chapter, s.latest_free_chapter_datetime
-        FROM title_sources s WHERE s.source_id = $1 AND s.source_type = $2
+        SELECT ts.title_row_id, ts.latest_free_chapter, ts.latest_free_chapter_datetime
+        FROM title_sources ts WHERE ts.source_id = $1 AND ts.source_type = $2
         """,
         source_id,
         source_type,

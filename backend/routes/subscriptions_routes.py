@@ -35,7 +35,7 @@ async def create_subscription(
 
     async with pool.acquire() as conn:
         subscription_public_id = await subscriptions_controller.add_subscription(
-            conn, client, user["id"], subscription.source_id, subscription.source_type
+            conn, client, user["row_id"], subscription.source_id, subscription.source_type
         )
         return SubscriptionResponse(subscription_public_id=subscription_public_id)
 
@@ -55,7 +55,7 @@ class SubscriptionItem(BaseModel):
 @router.get("")
 async def list_subscriptions(user: CurrentUser, pool: DbPool) -> list[SubscriptionItem]:
     async with pool.acquire() as conn:
-        rows = await subscriptions_controller.get_subscriptions(conn, user["id"])
+        rows = await subscriptions_controller.get_subscriptions(conn, user["row_id"])
         return [SubscriptionItem(**dict(row)) for row in rows]
 
 
@@ -75,7 +75,7 @@ async def update_subscription(
         async with pool.acquire() as conn:
             await subscriptions_controller.update_subscription(
                 conn,
-                user["id"],
+                user["row_id"],
                 subscription_public_id,
                 update.latest_read_chapter,
                 update.read_url,
@@ -91,7 +91,7 @@ async def delete_subscription(
     try:
         async with pool.acquire() as conn:
             await subscriptions_controller.remove_subscription(
-                conn, user["id"], subscription_public_id
+                conn, user["row_id"], subscription_public_id
             )
     except SubscriptionNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

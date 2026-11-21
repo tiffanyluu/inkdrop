@@ -20,8 +20,8 @@ async def create_session(
 async def get_user_by_token_hash(conn: Connection, token_hash: str) -> Record | None:
     return await conn.fetchrow(
         """
-        SELECT u.id, u.user_public_id, u.email, u.first_name, u.last_name
-        FROM users u JOIN user_sessions s ON u.id = s.user_row_id
+        SELECT u.row_id, u.user_public_id, u.email, u.first_name, u.last_name
+        FROM users u JOIN user_sessions s ON u.row_id = s.user_row_id
         WHERE s.token_hash = $1 AND s.expiration_datetime > now()
         """,
         token_hash,
