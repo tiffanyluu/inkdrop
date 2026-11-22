@@ -8,7 +8,11 @@ from pydantic import BaseModel
 from clients import MangadexClient
 from controllers import subscriptions_controller
 from dependencies import CurrentUser, DbPool, get_mangadex_client
-from exceptions import SubscriptionNotFoundError
+from exceptions import (
+    MangadexError,
+    MangadexNotFoundError,
+    SubscriptionNotFoundError,
+)
 from models import SourceType, TitleStatus
 
 router = APIRouter(prefix="/subscriptions")
@@ -33,11 +37,20 @@ async def create_subscription(
     if subscription.source_type != "MANGADEX":
         raise HTTPException(status_code=400, detail="Not supported yet")
 
-    async with pool.acquire() as conn:
-        subscription_public_id = await subscriptions_controller.add_subscription(
-            conn, client, user["row_id"], subscription.source_id, subscription.source_type
-        )
-        return SubscriptionResponse(subscription_public_id=subscription_public_id)
+    try:
+        async with pool.acquire() as conn:
+            subscription_public_id = await subscriptions_controller.add_subscription(
+                conn,
+                client,
+                user["row_id"],
+                subscription.source_id,
+                subscription.source_type,
+            )
+            return SubscriptionResponse(subscription_public_id=subscription_public_id)
+    except MangadexNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except MangadexError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 class SubscriptionItem(BaseModel):

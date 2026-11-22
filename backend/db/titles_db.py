@@ -109,3 +109,18 @@ async def update_last_checked_datetime(
         source_id,
         source_type,
     )
+
+
+async def list_sources_with_subscribers(conn: Connection) -> list[Record]:
+    return await conn.fetch(
+        """
+        SELECT ts.source_id, ts.source_type
+        FROM title_sources ts
+        WHERE EXISTS (
+            SELECT 1 
+            FROM subscriptions s
+            WHERE ts.title_row_id = s.title_row_id
+        )
+        ORDER BY ts.last_checked_datetime NULLS FIRST
+        """,
+    )
