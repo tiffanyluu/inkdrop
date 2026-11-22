@@ -16,3 +16,11 @@ class SubscriptionNotFoundError(Exception):
 
 class NotificationNotFoundError(Exception):
     pass
+
+
+class MangadexNotFoundError(Exception):
+    pass
+
+
+class MangadexError(Exception):
+    pass
