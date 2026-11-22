@@ -1,11 +1,12 @@
 from functools import lru_cache
 
-from pydantic import PostgresDsn
+from pydantic import PostgresDsn, RedisDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     database_url: PostgresDsn
+    redis_url: RedisDsn
 
     model_config = SettingsConfigDict(env_file=".env")
 
