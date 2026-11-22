@@ -73,7 +73,7 @@ async def add_title(
     return title_row_id, title_public_id
 
 
-async def refresh_title_source(
+async def sync_chapters(
     conn: Connection,
     client: MangadexClient,
     source_id: str,
