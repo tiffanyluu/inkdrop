@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from clients import MangadexClient
 from controllers import titles_controller
 from dependencies import DbPool, get_current_user, get_mangadex_client
-from exceptions import MangadexError, MangadexNotFoundError, SourceNotFoundError
+from exceptions import MangadexError, MangadexNotFoundError
 from models import SourceType
 
 router = APIRouter(prefix="/titles", dependencies=[Depends(get_current_user)])
@@ -39,30 +39,6 @@ async def create_title(
                 title.source_type,
             )
             return TitleResponse(title_public_id=title_public_id)
-    except MangadexNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except MangadexError as e:
-        raise HTTPException(status_code=502, detail=str(e))
-
-
-@router.post("/refresh", status_code=status.HTTP_204_NO_CONTENT)
-async def refresh_title(
-    title: TitleRequest,
-    client: Annotated[MangadexClient, Depends(get_mangadex_client)],
-    pool: DbPool,
-) -> None:
-    if title.source_type != "MANGADEX":
-        raise HTTPException(status_code=400, detail="Not supported yet")
-    try:
-        async with pool.acquire() as conn:
-            await titles_controller.refresh_title_source(
-                conn, client, title.source_id, title.source_type
-            )
-    except SourceNotFoundError as e:
-        raise HTTPException(
-            status_code=404,
-            detail=str(e),
-        )
     except MangadexNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except MangadexError as e:
