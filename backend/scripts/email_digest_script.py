@@ -23,9 +23,9 @@ async def send_email_digest():
         for user_row_id, notifications in groupby(rows, key=lambda r: r["user_row_id"]):
             notifications = list(notifications)
 
-            html = f"<p>Hi {escape(notifications[0]["first_name"])}, here are your new chapters:</p><ul>"
+            html = f"<p>Hi {escape(notifications[0]['first_name'])}, here are your new chapters:</p><ul>"
             for notification in notifications:
-                html += f"<li>{escape(notification["title_name"])}: Chapter {notification["chapter"]}</li>"
+                html += f"<li>{escape(notification['title_name'])}: Chapter {notification['chapter']}</li>"
             html += "</ul>"
 
             if len(notifications) == 1:
