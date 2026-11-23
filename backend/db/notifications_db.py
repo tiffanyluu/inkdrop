@@ -75,3 +75,30 @@ async def count_unseen_notifications(conn: Connection, user_row_id: int) -> int:
         """,
         user_row_id,
     )
+
+
+async def list_unemailed_notifications(conn: Connection) -> list[Record]:
+    return await conn.fetch(
+        """
+        SELECT u.first_name, u.email, t.title_name, n.chapter, 
+            n.row_id AS notification_row_id, u.row_id AS user_row_id
+        FROM notifications n
+        JOIN users u ON n.user_row_id = u.row_id
+        JOIN titles t ON n.title_row_id = t.row_id
+        WHERE n.emailed_datetime IS NULL AND n.seen_datetime IS NULL
+        ORDER BY u.row_id, n.create_datetime
+        """,
+    )
+
+
+async def set_notification_emailed(
+    conn: Connection, notification_row_ids: list[int]
+) -> None:
+    await conn.execute(
+        """
+        UPDATE notifications
+        SET emailed_datetime = now()
+        WHERE row_id = ANY($1)
+        """,
+        notification_row_ids,
+    )
