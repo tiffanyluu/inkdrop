@@ -2,7 +2,7 @@ import asyncio
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from asyncpg import Connection, Record, UniqueViolationError
+from asyncpg import Pool, Record, UniqueViolationError
 from pwdlib import PasswordHash
 
 from redis.asyncio import Redis
@@ -26,27 +26,29 @@ async def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 async def add_user(
-    conn: Connection, first_name: str, last_name: str, email: str, password: str
+    pool: Pool, first_name: str, last_name: str, email: str, password: str
 ) -> Record:
     hashed_password = await hash_password(password)
     email = email.lower()
     try:
-        return await users_db.create_user(
-            conn, first_name, last_name, email, hashed_password
-        )
+        async with pool.acquire() as conn:
+            return await users_db.create_user(
+                conn, first_name, last_name, email, hashed_password
+            )
     except UniqueViolationError:
         raise EmailAlreadyExistsError("This email already exists. Please log in.")
 
 
 async def login_user(
-    conn: Connection,
+    pool: Pool,
     redis: Redis,
     email: str,
     password: str,
     session_duration: timedelta,
 ) -> str:
     email = email.lower()
-    user = await users_db.get_user_by_email(conn, email)
+    async with pool.acquire() as conn:
+        user = await users_db.get_user_by_email(conn, email)
     if not user:
         raise InvalidCredentialsError("Invalid email or password. Please try again.")
 

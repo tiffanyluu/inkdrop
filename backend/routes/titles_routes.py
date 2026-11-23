@@ -31,14 +31,13 @@ async def create_title(
     if title.source_type != "MANGADEX":
         raise HTTPException(status_code=400, detail="Not supported yet")
     try:
-        async with pool.acquire() as conn:
-            _, title_public_id = await titles_controller.add_title(
-                conn,
-                client,
-                title.source_id,
-                title.source_type,
-            )
-            return TitleResponse(title_public_id=title_public_id)
+        _, title_public_id = await titles_controller.add_title(
+            pool,
+            client,
+            title.source_id,
+            title.source_type,
+        )
+        return TitleResponse(title_public_id=title_public_id)
     except MangadexNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except MangadexError as e:
