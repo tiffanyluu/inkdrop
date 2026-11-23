@@ -32,16 +32,15 @@ class UserResponse(BaseModel):
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def create_user(user: SignupRequest, pool: DbPool) -> UserResponse:
     try:
-        async with pool.acquire() as conn:
-            fetched_user = await auth_controller.add_user(
-                conn, user.first_name, user.last_name, user.email, user.password
-            )
-            return UserResponse(
-                user_public_id=fetched_user["user_public_id"],
-                email=fetched_user["email"],
-                first_name=fetched_user["first_name"],
-                last_name=fetched_user["last_name"],
-            )
+        fetched_user = await auth_controller.add_user(
+            pool, user.first_name, user.last_name, user.email, user.password
+        )
+        return UserResponse(
+            user_public_id=fetched_user["user_public_id"],
+            email=fetched_user["email"],
+            first_name=fetched_user["first_name"],
+            last_name=fetched_user["last_name"],
+        )
     except EmailAlreadyExistsError as e:
         raise HTTPException(status_code=409, detail=str(e))
 
@@ -66,18 +65,17 @@ async def login_user(
     user: LoginRequest, response: Response, pool: DbPool, redis: RedisClient
 ) -> None:
     try:
-        async with pool.acquire() as conn:
-            token = await auth_controller.login_user(
-                conn, redis, user.email, user.password, SESSION_DURATION
-            )
-            response.set_cookie(
-                key="session",
-                value=token,
-                httponly=True,
-                samesite="lax",
-                max_age=int(SESSION_DURATION.total_seconds()),
-                secure=True,
-            )
+        token = await auth_controller.login_user(
+            pool, redis, user.email, user.password, SESSION_DURATION
+        )
+        response.set_cookie(
+            key="session",
+            value=token,
+            httponly=True,
+            samesite="lax",
+            max_age=int(SESSION_DURATION.total_seconds()),
+            secure=True,
+        )
     except InvalidCredentialsError as e:
         raise HTTPException(status_code=401, detail=str(e))
 

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from asyncpg import Connection, UniqueViolationError
+from asyncpg import Pool, UniqueViolationError
 
 from clients import MangadexClient
 from db import titles_db, notifications_db, subscriptions_db
@@ -25,12 +25,13 @@ def get_latest_available_chapter_info(
 
 
 async def add_title(
-    conn: Connection,
+    pool: Pool,
     client: MangadexClient,
     source_id: str,
     source_type: SourceType,
 ) -> tuple[int, UUID]:
-    row = await titles_db.get_title_by_source(conn, source_id, source_type)
+    async with pool.acquire() as conn:
+        row = await titles_db.get_title_by_source(conn, source_id, source_type)
 
     if row is not None:
         return row["row_id"], row["title_public_id"]
@@ -49,39 +50,42 @@ async def add_title(
     )
 
     try:
-        async with conn.transaction():
-            title_row_id, title_public_id = await titles_db.create_title(
-                conn,
-                manga.attributes.display_title,
-                manga_status,
-                manga.cover_url,
-                manga.attributes.display_description,
-            )
+        async with pool.acquire() as conn:
+            async with conn.transaction():
+                title_row_id, title_public_id = await titles_db.create_title(
+                    conn,
+                    manga.attributes.display_title,
+                    manga_status,
+                    manga.cover_url,
+                    manga.attributes.display_description,
+                )
 
-            await titles_db.create_title_source(
-                conn,
-                title_row_id,
-                source_id,
-                source_type,
-                latest_free_chapter,
-                latest_free_chapter_datetime,
-            )
+                await titles_db.create_title_source(
+                    conn,
+                    title_row_id,
+                    source_id,
+                    source_type,
+                    latest_free_chapter,
+                    latest_free_chapter_datetime,
+                )
     except UniqueViolationError:
-        row = await titles_db.get_title_by_source(conn, source_id, source_type)
+        async with pool.acquire() as conn:
+            row = await titles_db.get_title_by_source(conn, source_id, source_type)
         return row["row_id"], row["title_public_id"]
 
     return title_row_id, title_public_id
 
 
 async def sync_chapters(
-    conn: Connection,
+    pool: Pool,
     client: MangadexClient,
     source_id: str,
     source_type: SourceType,
 ) -> None:
-    title_source = await titles_db.get_source_by_source_id_type(
-        conn, source_id, source_type
-    )
+    async with pool.acquire() as conn:
+        title_source = await titles_db.get_source_by_source_id_type(
+            conn, source_id, source_type
+        )
 
     if title_source is None:
         raise SourceNotFoundError(
@@ -101,20 +105,21 @@ async def sync_chapters(
         or latest_free_chapter > stored_latest_free_chapter
     )
 
-    if has_new_chapter:
-        async with conn.transaction():
-            await titles_db.update_latest_chapter(
-                conn,
-                source_id,
-                source_type,
-                latest_free_chapter,
-                latest_free_chapter_datetime,
-            )
-            await notifications_db.create_notifications(
-                conn, title_source["title_row_id"], latest_free_chapter
-            )
-            await subscriptions_db.update_latest_notified_chapter(
-                conn, title_source["title_row_id"], latest_free_chapter
-            )
+    async with pool.acquire() as conn:
+        if has_new_chapter:
+            async with conn.transaction():
+                await titles_db.update_latest_chapter(
+                    conn,
+                    source_id,
+                    source_type,
+                    latest_free_chapter,
+                    latest_free_chapter_datetime,
+                )
+                await notifications_db.create_notifications(
+                    conn, title_source["title_row_id"], latest_free_chapter
+                )
+                await subscriptions_db.update_latest_notified_chapter(
+                    conn, title_source["title_row_id"], latest_free_chapter
+                )
 
-    await titles_db.update_last_checked_datetime(conn, source_id, source_type)
+        await titles_db.update_last_checked_datetime(conn, source_id, source_type)

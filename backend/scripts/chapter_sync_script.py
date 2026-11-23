@@ -22,10 +22,9 @@ async def sync_all_chapters():
             rows = await titles_db.list_sources_with_subscribers(conn)
         for row in rows:
             try:
-                async with pool.acquire() as conn:
-                    await titles_controller.sync_chapters(
-                        conn, mangadex_client, row["source_id"], row["source_type"]
-                    )
+                await titles_controller.sync_chapters(
+                    pool, mangadex_client, row["source_id"], row["source_type"]
+                )
                 success += 1
             except (MangadexError, MangadexNotFoundError) as e:
                 logger.error(

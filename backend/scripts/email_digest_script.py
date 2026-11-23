@@ -20,7 +20,7 @@ async def send_email_digest():
     try:
         async with pool.acquire() as conn:
             rows = await notifications_db.list_unemailed_notifications(conn)
-        for user_row_id, notifications in groupby(rows, key=lambda r: r["user_row_id"]):
+        for _, notifications in groupby(rows, key=lambda r: r["user_row_id"]):
             notifications = list(notifications)
 
             html = f"<p>Hi {escape(notifications[0]['first_name'])}, here are your new chapters:</p><ul>"
