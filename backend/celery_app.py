@@ -10,8 +10,8 @@ app.conf.update(
     timezone="America/Los_Angeles",
     beat_schedule={
         "sync-chapters": {
-            "task": "tasks.daily_chapter_sync",
-            "schedule": crontab(hour=9, minute=0),
+            "task": "tasks.scheduled_chapter_sync",
+            "schedule": crontab(hour="9, 21", minute=0),
         }
     },
 )
