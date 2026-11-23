@@ -753,6 +753,7 @@ dependencies = [
     { name = "httpx" },
     { name = "pwdlib", extra = ["argon2"] },
     { name = "pydantic-settings" },
+    { name = "redis" },
     { name = "resend" },
 ]
 
@@ -769,6 +770,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pwdlib", extras = ["argon2"], specifier = ">=0.4.0" },
     { name = "pydantic-settings", specifier = ">=2.16.2" },
+    { name = "redis", specifier = ">=8.1.0" },
     { name = "resend", specifier = ">=2.55.0" },
 ]
 

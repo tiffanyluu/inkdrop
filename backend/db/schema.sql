@@ -188,33 +188,6 @@ ALTER TABLE public.titles ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
--- Name: user_sessions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.user_sessions (
-    row_id bigint CONSTRAINT user_sessions_id_not_null NOT NULL,
-    token_hash character varying(64) NOT NULL,
-    user_row_id bigint NOT NULL,
-    create_datetime timestamp with time zone DEFAULT now() NOT NULL,
-    expiration_datetime timestamp with time zone NOT NULL
-);
-
-
---
--- Name: user_sessions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.user_sessions ALTER COLUMN row_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.user_sessions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -333,22 +306,6 @@ ALTER TABLE ONLY public.titles
 
 
 --
--- Name: user_sessions user_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.user_sessions
-    ADD CONSTRAINT user_sessions_pkey PRIMARY KEY (row_id);
-
-
---
--- Name: user_sessions user_sessions_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.user_sessions
-    ADD CONSTRAINT user_sessions_token_hash_key UNIQUE (token_hash);
-
-
---
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -376,20 +333,6 @@ CREATE INDEX idx_subscriptions_title ON public.subscriptions USING btree (title_
 --
 
 CREATE INDEX idx_title_sources_title ON public.title_sources USING btree (title_row_id);
-
-
---
--- Name: idx_user_sessions_expiration_datetime; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_user_sessions_expiration_datetime ON public.user_sessions USING btree (expiration_datetime);
-
-
---
--- Name: idx_user_sessions_user_row_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_user_sessions_user_row_id ON public.user_sessions USING btree (user_row_id);
 
 
 --
@@ -468,14 +411,6 @@ ALTER TABLE ONLY public.title_sources
 
 
 --
--- Name: user_sessions user_sessions_user_row_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.user_sessions
-    ADD CONSTRAINT user_sessions_user_row_id_fkey FOREIGN KEY (user_row_id) REFERENCES public.users(row_id) ON DELETE CASCADE;
-
-
---
 -- PostgreSQL database dump complete
 --
 
@@ -496,4 +431,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261114230549'),
     ('20261121025829'),
     ('20261121030229'),
-    ('20261123002736');
+    ('20261123002736'),
+    ('20261123035914');

@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 from asyncpg import Connection, Record, UniqueViolationError
 from pwdlib import PasswordHash
 
+from redis.asyncio import Redis
 import utils
 from db import sessions_db, users_db
 from exceptions import EmailAlreadyExistsError, InvalidCredentialsError
@@ -38,7 +39,11 @@ async def add_user(
 
 
 async def login_user(
-    conn: Connection, email: str, password: str, session_duration: timedelta
+    conn: Connection,
+    redis: Redis,
+    email: str,
+    password: str,
+    session_duration: timedelta,
 ) -> str:
     email = email.lower()
     user = await users_db.get_user_by_email(conn, email)
@@ -53,14 +58,14 @@ async def login_user(
     hashed_token = utils.hash_token(token)
 
     await sessions_db.create_session(
-        conn, user["row_id"], hashed_token, datetime.now(UTC) + session_duration
+        redis, user["row_id"], hashed_token, session_duration
     )
 
     return token
 
 
-async def logout_user(conn: Connection, token: str | None) -> None:
+async def logout_user(redis: Redis, token: str | None) -> None:
     if token is None:
         return
     hashed_token = utils.hash_token(token)
-    await sessions_db.delete_session(conn, hashed_token)
+    await sessions_db.delete_session(redis, hashed_token)
