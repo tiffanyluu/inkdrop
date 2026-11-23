@@ -66,7 +66,8 @@ CREATE TABLE public.notifications (
     user_row_id bigint NOT NULL,
     title_row_id bigint NOT NULL,
     create_datetime timestamp with time zone DEFAULT now() NOT NULL,
-    seen_datetime timestamp with time zone
+    seen_datetime timestamp with time zone,
+    emailed_datetime timestamp with time zone
 );
 
 
@@ -494,4 +495,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261114223258'),
     ('20261114230549'),
     ('20261121025829'),
-    ('20261121030229');
+    ('20261121030229'),
+    ('20261123002736');

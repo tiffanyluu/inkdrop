@@ -24,3 +24,11 @@ class MangadexNotFoundError(Exception):
 
 class MangadexError(Exception):
     pass
+
+
+class EmailTemporaryError(Exception):
+    pass
+
+
+class EmailError(Exception):
+    pass
