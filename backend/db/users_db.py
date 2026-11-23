@@ -25,3 +25,14 @@ async def get_user_by_email(conn: Connection, email: str) -> Record | None:
         """,
         email,
     )
+
+
+async def get_user_by_user_row_id(conn: Connection, user_row_id: int) -> Record | None:
+    return await conn.fetchrow(
+        """
+        SELECT row_id, user_public_id, email, first_name, last_name
+        FROM users
+        WHERE row_id = $1
+        """,
+        user_row_id,
+    )

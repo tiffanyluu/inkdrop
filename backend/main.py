@@ -13,15 +13,20 @@ from routes import (
     notifications_routes,
 )
 
+from redis.asyncio import Redis
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
 
     app.state.pool = await create_pool(dsn=str(settings.database_url))
+    app.state.redis = Redis.from_url(url=str(settings.redis_url), decode_responses=True)
+    await app.state.redis.ping()
     app.state.mangadex_client = MangadexClient()
     yield
     await app.state.mangadex_client.close()
+    await app.state.redis.aclose()
     await app.state.pool.close()
 
 

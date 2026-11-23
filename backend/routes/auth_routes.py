@@ -7,7 +7,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from pydantic import BaseModel, EmailStr, Field
 
 from controllers import auth_controller
-from dependencies import DbPool, get_current_user
+from dependencies import DbPool, RedisClient, get_current_user
 from exceptions import EmailAlreadyExistsError, InvalidCredentialsError
 
 router = APIRouter(prefix="/auth")
@@ -62,11 +62,13 @@ class LoginRequest(BaseModel):
 
 
 @router.post("/login", status_code=status.HTTP_204_NO_CONTENT)
-async def login_user(user: LoginRequest, response: Response, pool: DbPool) -> None:
+async def login_user(
+    user: LoginRequest, response: Response, pool: DbPool, redis: RedisClient
+) -> None:
     try:
         async with pool.acquire() as conn:
             token = await auth_controller.login_user(
-                conn, user.email, user.password, SESSION_DURATION
+                conn, redis, user.email, user.password, SESSION_DURATION
             )
             response.set_cookie(
                 key="session",
@@ -83,14 +85,10 @@ async def login_user(user: LoginRequest, response: Response, pool: DbPool) -> No
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout_user(
     response: Response,
-    pool: DbPool,
+    redis: RedisClient,
     session: Annotated[str | None, Cookie()] = None,
 ) -> None:
-    async with pool.acquire() as conn:
-        await auth_controller.logout_user(
-            conn,
-            session,
-        )
+    await auth_controller.logout_user(redis, session)
     response.delete_cookie(
         "session",
         httponly=True,
