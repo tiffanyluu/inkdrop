@@ -3,22 +3,22 @@ from uuid import UUID
 
 from asyncpg import Pool, Record, UniqueViolationError
 
-from clients import MangadexClient
+from clients import AthreaClient, MangadexClient
 from controllers import titles_controller
 from db import subscriptions_db
 from exceptions import SubscriptionNotFoundError
-from models import SourceType
+from models import TitleSource
 
 
 async def add_subscription(
     pool: Pool,
-    client: MangadexClient,
+    mangadex_client: MangadexClient,
+    athrea_client: AthreaClient,
     user_row_id: int,
-    source_id: str,
-    source_type: SourceType,
+    sources: list[TitleSource],
 ) -> UUID:
-    title_row_id, _ = await titles_controller.add_title(
-        pool, client, source_id, source_type
+    title_row_id = await titles_controller.add_title(
+        pool, mangadex_client, athrea_client, sources
     )
     async with pool.acquire() as conn:
         try:

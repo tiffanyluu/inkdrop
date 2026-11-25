@@ -1,4 +1,4 @@
-from .common import SourceType, TitleStatus, StandardizedSource
+from .common import SourceType, TitleStatus, StandardizedSource, TitleSource
 from .mangadex_model import ChapterFeed, Manga
 from .athrea_model import AthreaSeries
 
@@ -9,4 +9,5 @@ __all__ = [
     "TitleStatus",
     "AthreaSeries",
     "StandardizedSource",
+    "TitleSource",
 ]

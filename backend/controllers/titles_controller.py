@@ -1,14 +1,13 @@
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from uuid import UUID
 
 from asyncpg import Pool, UniqueViolationError
 
 from clients import AthreaClient, MangadexClient
 from db import titles_db, notifications_db, subscriptions_db
 from exceptions import SourceNotFoundError
-from models import ChapterFeed, SourceType, StandardizedSource
+from models import ChapterFeed, SourceType, StandardizedSource, TitleSource
 
 
 def get_latest_available_chapter_info(
@@ -47,54 +46,69 @@ async def search_titles(
 
 async def add_title(
     pool: Pool,
-    client: MangadexClient,
-    source_id: str,
-    source_type: SourceType,
-) -> tuple[int, UUID]:
+    mangadex_client: MangadexClient,
+    athrea_client: AthreaClient,
+    sources: list[TitleSource],
+) -> int:
+    title_row_id = None
+    new_sources = []
     async with pool.acquire() as conn:
-        row = await titles_db.get_title_by_source(conn, source_id, source_type)
+        for source in sources:
+            row = await titles_db.get_title_by_source(
+                conn, source.source_id, source.source_type
+            )
+            if row is None:
+                new_sources.append(source)
+            else:
+                title_row_id = row["row_id"]
 
-    if row is not None:
-        return row["row_id"], row["title_public_id"]
+    for source in new_sources:
+        if source.source_type == "MANGADEX":
+            manga = await mangadex_client.get_manga(source.source_id)
+            chapters = await mangadex_client.get_chapters(source.source_id)
+            title_name = manga.attributes.display_title
+            title_status = (
+                manga.attributes.status.upper()
+                if manga.attributes.status != "cancelled"
+                else "CANCELED"
+            )
+            cover_url = manga.cover_url
+            description = manga.attributes.display_description
+            latest_free_chapter, latest_free_chapter_datetime = (
+                get_latest_available_chapter_info(chapters)
+            )
+        else:
+            series = await athrea_client.get_series(source.source_id)
+            title_name = series.name
+            title_status = series.status.upper()
+            cover_url = series.cover_url
+            description = series.description
+            latest_free_chapter = series.latest_free_chapter
+            latest_free_chapter_datetime = series.latest_free_chapter_datetime
 
-    manga = await client.get_manga(source_id)
-    chapters = await client.get_chapters(source_id)
-
-    manga_status = (
-        manga.attributes.status.upper()
-        if manga.attributes.status != "cancelled"
-        else "CANCELED"
-    )
-
-    latest_free_chapter, latest_free_chapter_datetime = (
-        get_latest_available_chapter_info(chapters)
-    )
-
-    try:
-        async with pool.acquire() as conn:
-            async with conn.transaction():
-                title_row_id, title_public_id = await titles_db.create_title(
-                    conn,
-                    manga.attributes.display_title,
-                    manga_status,
-                    manga.cover_url,
-                    manga.attributes.display_description,
+        try:
+            async with pool.acquire() as conn:
+                async with conn.transaction():
+                    if title_row_id is None:
+                        title_row_id, _ = await titles_db.create_title(
+                            conn, title_name, title_status, cover_url, description
+                        )
+                    await titles_db.create_title_source(
+                        conn,
+                        title_row_id,
+                        source.source_id,
+                        source.source_type,
+                        latest_free_chapter,
+                        latest_free_chapter_datetime,
+                    )
+        except UniqueViolationError:
+            async with pool.acquire() as conn:
+                row = await titles_db.get_title_by_source(
+                    conn, source.source_id, source.source_type
                 )
+            title_row_id = row["row_id"]
 
-                await titles_db.create_title_source(
-                    conn,
-                    title_row_id,
-                    source_id,
-                    source_type,
-                    latest_free_chapter,
-                    latest_free_chapter_datetime,
-                )
-    except UniqueViolationError:
-        async with pool.acquire() as conn:
-            row = await titles_db.get_title_by_source(conn, source_id, source_type)
-        return row["row_id"], row["title_public_id"]
-
-    return title_row_id, title_public_id
+    return title_row_id
 
 
 async def sync_chapters(

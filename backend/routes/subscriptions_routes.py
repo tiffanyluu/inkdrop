@@ -3,24 +3,25 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from clients import MangadexClient
+from clients import AthreaClient, MangadexClient
 from controllers import subscriptions_controller
-from dependencies import CurrentUser, DbPool, get_mangadex_client
+from dependencies import CurrentUser, DbPool, get_athrea_client, get_mangadex_client
 from exceptions import (
+    AthreaError,
+    AthreaNotFoundError,
     MangadexError,
     MangadexNotFoundError,
     SubscriptionNotFoundError,
 )
-from models import SourceType, TitleStatus
+from models import TitleSource, TitleStatus
 
 router = APIRouter(prefix="/subscriptions")
 
 
 class SubscriptionRequest(BaseModel):
-    source_id: str
-    source_type: SourceType
+    sources: list[TitleSource] = Field(min_length=1)
 
 
 class SubscriptionResponse(BaseModel):
@@ -30,25 +31,23 @@ class SubscriptionResponse(BaseModel):
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_subscription(
     subscription: SubscriptionRequest,
-    client: Annotated[MangadexClient, Depends(get_mangadex_client)],
+    mangadex_client: Annotated[MangadexClient, Depends(get_mangadex_client)],
+    athrea_client: Annotated[AthreaClient, Depends(get_athrea_client)],
     user: CurrentUser,
     pool: DbPool,
 ) -> SubscriptionResponse:
-    if subscription.source_type != "MANGADEX":
-        raise HTTPException(status_code=400, detail="Not supported yet")
-
     try:
         subscription_public_id = await subscriptions_controller.add_subscription(
             pool,
-            client,
+            mangadex_client,
+            athrea_client,
             user["row_id"],
-            subscription.source_id,
-            subscription.source_type,
+            subscription.sources,
         )
         return SubscriptionResponse(subscription_public_id=subscription_public_id)
-    except MangadexNotFoundError as e:
+    except (MangadexNotFoundError, AthreaNotFoundError) as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except MangadexError as e:
+    except (MangadexError, AthreaError) as e:
         raise HTTPException(status_code=502, detail=str(e))
 
 

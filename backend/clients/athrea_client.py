@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from httpx import AsyncClient, HTTPStatusError, RequestError, Timeout, TimeoutException
@@ -62,14 +62,14 @@ class AthreaClient:
                 status = cells[1].text.strip()
 
         latest_free_chapter = None
-        latest_free_chapter_date = None
+        latest_free_chapter_datetime = None
         latest_paid_chapter = None
         for li in soup.select("#chapterlist li"):
             if li.select_one("a").has_attr("href"):
                 latest_free_chapter = Decimal(li["data-num"])
-                latest_free_chapter_date = datetime.strptime(
+                latest_free_chapter_datetime = datetime.strptime(
                     li.select_one("span.chapterdate").text.strip(), "%B %d, %Y"
-                ).date()
+                ).replace(tzinfo=timezone.utc)
                 break
             if latest_paid_chapter is None:
                 latest_paid_chapter = Decimal(li["data-num"])
@@ -80,6 +80,6 @@ class AthreaClient:
             status=status,
             description=soup.select_one("div.entry-content").text.strip(),
             latest_free_chapter=latest_free_chapter,
-            latest_free_chapter_date=latest_free_chapter_date,
+            latest_free_chapter_datetime=latest_free_chapter_datetime,
             latest_paid_chapter=latest_paid_chapter,
         )
