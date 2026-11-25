@@ -3,7 +3,7 @@ from asyncpg import Pool, Record
 from fastapi import Cookie, Depends, HTTPException, Request
 from redis.asyncio import Redis
 import utils
-from clients import MangadexClient
+from clients import AthreaClient, MangadexClient
 from db import sessions_db, users_db
 
 
@@ -23,6 +23,10 @@ RedisClient = Annotated[Redis, Depends(get_redis)]
 
 async def get_mangadex_client(request: Request) -> MangadexClient:
     return request.app.state.mangadex_client
+
+
+async def get_athrea_client(request: Request) -> AthreaClient:
+    return request.app.state.athrea_client
 
 
 async def get_current_user(

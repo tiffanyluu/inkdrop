@@ -3,7 +3,7 @@ import asyncio
 from httpx import AsyncClient, HTTPStatusError, RequestError, Timeout, TimeoutException
 
 from exceptions import MangadexError, MangadexNotFoundError
-from models import ChapterFeed, Manga
+from models import ChapterFeed, Manga, StandardizedSource
 
 
 class MangadexClient:
@@ -33,6 +33,23 @@ class MangadexClient:
             )
         except RequestError:
             raise MangadexError("Unable to reach MangaDex")
+
+    async def search(self, query: str) -> list[StandardizedSource]:
+        response = await self._get(
+            "/manga", params={"title": query, "includes[]": "cover_art"}
+        )
+        search_results = []
+        for data in response["data"]:
+            manga = Manga.model_validate(data)
+            search_results.append(
+                StandardizedSource(
+                    name=manga.attributes.display_title,
+                    cover_url=manga.cover_url,
+                    source_id=manga.id,
+                    source_type="MANGADEX",
+                )
+            )
+        return search_results
 
     async def get_manga(self, source_id: str) -> Manga:
         response = await self._get(

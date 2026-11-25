@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from asyncpg import create_pool
 from fastapi import FastAPI
 
-from clients import MangadexClient
+from clients import AthreaClient, MangadexClient
 from config import get_settings
 from dependencies import DbPool
 from routes import (
@@ -24,7 +24,9 @@ async def lifespan(app: FastAPI):
     app.state.redis = Redis.from_url(url=str(settings.redis_url), decode_responses=True)
     await app.state.redis.ping()
     app.state.mangadex_client = MangadexClient()
+    app.state.athrea_client = AthreaClient()
     yield
+    await app.state.athrea_client.close()
     await app.state.mangadex_client.close()
     await app.state.redis.aclose()
     await app.state.pool.close()
