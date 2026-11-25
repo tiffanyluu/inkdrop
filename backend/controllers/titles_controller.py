@@ -113,7 +113,8 @@ async def add_title(
 
 async def sync_chapters(
     pool: Pool,
-    client: MangadexClient,
+    mangadex_client: MangadexClient,
+    athrea_client: AthreaClient,
     source_id: str,
     source_type: SourceType,
 ) -> None:
@@ -129,11 +130,15 @@ async def sync_chapters(
 
     stored_latest_free_chapter = title_source["latest_free_chapter"]
 
-    chapters = await client.get_chapters(source_id)
-
-    latest_free_chapter, latest_free_chapter_datetime = (
-        get_latest_available_chapter_info(chapters)
-    )
+    if source_type == "MANGADEX":
+        chapters = await mangadex_client.get_chapters(source_id)
+        latest_free_chapter, latest_free_chapter_datetime = (
+            get_latest_available_chapter_info(chapters)
+        )
+    else:
+        series = await athrea_client.get_series(source_id)
+        latest_free_chapter = series.latest_free_chapter
+        latest_free_chapter_datetime = series.latest_free_chapter_datetime
 
     has_new_chapter = latest_free_chapter is not None and (
         stored_latest_free_chapter is None

@@ -1,11 +1,16 @@
 import asyncio
 import logging
 from asyncpg import create_pool
-from exceptions import MangadexError, MangadexNotFoundError
+from exceptions import (
+    AthreaError,
+    AthreaNotFoundError,
+    MangadexError,
+    MangadexNotFoundError,
+)
 from controllers import titles_controller
 from db import titles_db
 from config import get_settings
-from clients import MangadexClient
+from clients import AthreaClient, MangadexClient
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +19,7 @@ async def sync_all_chapters():
     settings = get_settings()
     pool = await create_pool(dsn=str(settings.database_url))
     mangadex_client = MangadexClient()
+    athrea_client = AthreaClient()
     success = 0
     failure = 0
 
@@ -23,10 +29,19 @@ async def sync_all_chapters():
         for row in rows:
             try:
                 await titles_controller.sync_chapters(
-                    pool, mangadex_client, row["source_id"], row["source_type"]
+                    pool,
+                    mangadex_client,
+                    athrea_client,
+                    row["source_id"],
+                    row["source_type"],
                 )
                 success += 1
-            except (MangadexError, MangadexNotFoundError) as e:
+            except (
+                MangadexError,
+                MangadexNotFoundError,
+                AthreaError,
+                AthreaNotFoundError,
+            ) as e:
                 logger.error(
                     "Failed to sync %s source %s: %s",
                     row["source_type"],
@@ -44,6 +59,7 @@ async def sync_all_chapters():
         logger.info("synced %s, failed %s", success, failure)
     finally:
         await mangadex_client.close()
+        await athrea_client.close()
         await pool.close()
 
 
