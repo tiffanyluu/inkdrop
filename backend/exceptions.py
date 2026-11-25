@@ -26,6 +26,14 @@ class MangadexError(Exception):
     pass
 
 
+class AthreaError(Exception):
+    pass
+
+
+class AthreaNotFoundError(Exception):
+    pass
+
+
 class EmailTemporaryError(Exception):
     pass
 
