@@ -1,13 +1,14 @@
+import asyncio
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
 from asyncpg import Pool, UniqueViolationError
 
-from clients import MangadexClient
+from clients import AthreaClient, MangadexClient
 from db import titles_db, notifications_db, subscriptions_db
 from exceptions import SourceNotFoundError
-from models import ChapterFeed, SourceType
+from models import ChapterFeed, SourceType, StandardizedSource
 
 
 def get_latest_available_chapter_info(
@@ -22,6 +23,26 @@ def get_latest_available_chapter_info(
         latest_free_chapter_datetime = latest_chapter.attributes.readable_at
 
     return latest_free_chapter, latest_free_chapter_datetime
+
+
+async def search_titles(
+    mangadex_client: MangadexClient,
+    athrea_client: AthreaClient,
+    query: str,
+) -> list[list[StandardizedSource]]:
+    mangadex_results, athrea_results = await asyncio.gather(
+        mangadex_client.search(query),
+        athrea_client.search(query),
+    )
+
+    grouped_results = {}
+    for result in mangadex_results + athrea_results:
+        normalized_name = "".join(c for c in result.name.lower() if c.isalnum())
+        if normalized_name not in grouped_results:
+            grouped_results[normalized_name] = []
+        grouped_results[normalized_name].append(result)
+
+    return list(grouped_results.values())
 
 
 async def add_title(
