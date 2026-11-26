@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
-interface LoginFormProps {
-  onLogin: () => void;
+interface LoginProps {
+  onLogin: (email: string, password: string) => Promise<void>;
 }
 
-export default function LoginForm({ onLogin }: LoginFormProps) {
+export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -14,23 +14,8 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     event.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.status === 401) {
-        throw new Error("Invalid email or password");
-      }
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      onLogin();
+      await onLogin(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

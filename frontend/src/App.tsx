@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import LoginForm from "./LoginForm";
+import Signup from "./Signup";
+import Login from "./Login";
 
 export interface User {
   user_public_id: string;
@@ -12,6 +13,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSignup, setShowSignup] = useState<boolean>(false);
 
   const fetchUser = async () => {
     try {
@@ -33,6 +35,23 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogin = async (email: string, password: string) => {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+    if (response.status === 401) {
+      throw new Error("Invalid email or password");
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    await fetchUser();
   };
 
   const handleLogout = async () => {
@@ -57,8 +76,24 @@ export default function App() {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
-  if (!user) return <LoginForm onLogin={fetchUser} />;
-
+  if (!user) {
+    if (showSignup) {
+      return (
+        <>
+          <Signup onSignup={handleLogin} />
+          <button onClick={() => setShowSignup(false)}>
+            Have an account? Log in
+          </button>
+        </>
+      );
+    }
+    return (
+      <>
+        <Login onLogin={handleLogin} />
+        <button onClick={() => setShowSignup(true)}>Create account</button>
+      </>
+    );
+  }
   return (
     <>
       <h1>Hi {user.first_name}</h1>
