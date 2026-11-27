@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import Search from "./pages/Search";
+import { Routes, Route } from "react-router";
 
 export interface User {
   user_public_id: string;
@@ -90,7 +91,9 @@ export default function App() {
   return (
     <>
       <h1>Hi {user.first_name}</h1>
-      <Search />
+      <Routes>
+        <Route path="/" element={<Search />} />
+      </Routes>
       <button onClick={handleLogout}>Logout</button>
     </>
   );
