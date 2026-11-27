@@ -59,7 +59,7 @@ export default function Search() {
       if (!response.ok) {
         throw new Error(`HTTP Error! Status: ${response.status}`);
       }
-      setSubscribedNames([...subscribedNames, title.name]);
+      setSubscribedNames([...subscribedNames, title.sources[0].source_id]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     }
@@ -98,7 +98,7 @@ export default function Search() {
                 />
               )}
               {title.name}
-              {subscribedNames.includes(title.name) ? (
+              {subscribedNames.includes(title.sources[0].source_id) ? (
                 <button disabled>Subscribed ✓</button>
               ) : (
                 <button onClick={() => handleSubscribe(title)}>

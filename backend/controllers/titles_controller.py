@@ -24,6 +24,15 @@ def get_latest_available_chapter_info(
     return latest_free_chapter, latest_free_chapter_datetime
 
 
+def normalize_name(name: str) -> str:
+    return "".join(c for c in name.lower() if c.isalnum())
+
+
+def normalize_author(author: str) -> str:
+    author_without_parentheses = author.split("(")[0]
+    return "".join(c for c in author_without_parentheses.lower() if c.isalnum())
+
+
 async def search_titles(
     mangadex_client: MangadexClient,
     athrea_client: AthreaClient,
@@ -34,14 +43,45 @@ async def search_titles(
         athrea_client.search(query),
     )
 
-    grouped_results = {}
-    for result in mangadex_results + athrea_results:
-        normalized_name = "".join(c for c in result.name.lower() if c.isalnum())
-        if normalized_name not in grouped_results:
-            grouped_results[normalized_name] = []
-        grouped_results[normalized_name].append(result)
+    normalized_mangadex_names = [normalize_name(result.name) for result in mangadex_results]
 
-    return list(grouped_results.values())
+    for result in athrea_results:
+        if normalize_name(result.name) in normalized_mangadex_names:
+            series = await athrea_client.get_series(result.source_id)
+            result.authors = series.authors
+
+    groups = []
+    for result in mangadex_results:
+        groups.append([result])
+
+    for athrea_result in athrea_results:
+        athrea_name = normalize_name(athrea_result.name)
+        athrea_authors = []
+        if athrea_result.authors is not None:
+            for author in athrea_result.authors:
+                athrea_authors.append(normalize_author(author))
+
+        matching_group = None
+        for group in groups:
+            mangadex_result = group[0]
+            if mangadex_result.source_type != "MANGADEX" or len(group) > 1:
+                continue
+            if normalize_name(mangadex_result.name) != athrea_name:
+                continue
+            if mangadex_result.authors is None:
+                continue
+            for author in mangadex_result.authors:
+                if normalize_author(author) in athrea_authors:
+                    matching_group = group
+            if matching_group is not None:
+                break
+
+        if matching_group is None:
+            groups.append([athrea_result])
+        else:
+            matching_group.append(athrea_result)
+
+    return groups
 
 
 async def add_title(
