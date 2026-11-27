@@ -40,3 +40,11 @@ class EmailTemporaryError(Exception):
 
 class EmailError(Exception):
     pass
+
+
+class CoverError(Exception):
+    pass
+
+
+class CoverNotFoundError(Exception):
+    pass
