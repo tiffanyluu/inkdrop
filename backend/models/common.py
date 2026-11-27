@@ -15,5 +15,6 @@ class TitleSource(BaseModel):
 class StandardizedSource(BaseModel):
     name: str
     cover_url: str | None
+    authors: list[str] | None = None
     source_id: str
     source_type: SourceType
