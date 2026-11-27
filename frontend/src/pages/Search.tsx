@@ -1,17 +1,5 @@
 import React, { useState } from "react";
-
-type SourceType = "MANGADEX" | "ATHREA";
-
-interface TitleSource {
-  source_id: string;
-  source_type: SourceType;
-}
-
-interface TitleResult {
-  name: string;
-  cover_url: string | null;
-  sources: TitleSource[];
-}
+import type { TitleResult } from "../types";
 
 export default function Search() {
   const [query, setQuery] = useState<string>("");

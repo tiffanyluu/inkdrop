@@ -3,13 +3,7 @@ import Signup from "./components/Signup";
 import Login from "./components/Login";
 import Search from "./pages/Search";
 import { Routes, Route } from "react-router";
-
-export interface User {
-  user_public_id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-}
+import type { User } from "./types";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
