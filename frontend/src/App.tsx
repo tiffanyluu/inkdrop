@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Signup from "./Signup";
 import Login from "./Login";
+import Search from "./Search";
 
 export interface User {
   user_public_id: string;
@@ -97,6 +98,7 @@ export default function App() {
   return (
     <>
       <h1>Hi {user.first_name}</h1>
+      <Search />
       <button onClick={handleLogout}>Logout</button>
     </>
   );

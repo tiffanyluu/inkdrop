@@ -52,7 +52,7 @@ class Manga(BaseModel):
                 if relationship.attributes is None:
                     return None
                 cover_filename = relationship.attributes["fileName"]
-                return f"https://uploads.mangadex.org/covers/{self.id}/{cover_filename}"
+                return f"https://uploads.mangadex.org/covers/{self.id}/{cover_filename}.512.jpg"
 
 
 class ChapterAttributes(BaseModel):

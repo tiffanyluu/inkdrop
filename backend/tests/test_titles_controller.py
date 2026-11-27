@@ -126,17 +126,19 @@ async def test_add_subscription_twice_returns_same_subscription(
     assert first_subscription_public_id == second_subscription_public_id
 
 
-async def test_search_merges_same_name(mangadex_client, athrea_client):
+async def test_search_merges_same_name_and_author(mangadex_client, athrea_client):
     mangadex_client.search_results = [
         StandardizedSource(
             name="Possessing My Venus",
             cover_url=None,
+            authors=["Venus Author (金星)"],
             source_id="mangadex-id",
             source_type="MANGADEX",
         ),
         StandardizedSource(
             name="Some Other Series",
             cover_url=None,
+            authors=["Someone Else"],
             source_id="other-id",
             source_type="MANGADEX",
         ),
@@ -157,3 +159,60 @@ async def test_search_merges_same_name(mangadex_client, athrea_client):
     assert len(grouped_results) == 2
     assert len(grouped_results[0]) == 2
     assert len(grouped_results[1]) == 1
+
+
+async def test_search_does_not_merge_same_name_different_author(
+    mangadex_client, athrea_client
+):
+    mangadex_client.search_results = [
+        StandardizedSource(
+            name="Possessing My Venus",
+            cover_url=None,
+            authors=["Different Author"],
+            source_id="mangadex-id",
+            source_type="MANGADEX",
+        ),
+    ]
+    athrea_client.search_results = [
+        StandardizedSource(
+            name="Possessing My Venus",
+            cover_url=None,
+            source_id="possessing-my-venus",
+            source_type="ATHREA",
+        ),
+    ]
+
+    grouped_results = await titles_controller.search_titles(
+        mangadex_client, athrea_client, "venus"
+    )
+
+    assert len(grouped_results) == 2
+    assert len(grouped_results[0]) == 1
+    assert len(grouped_results[1]) == 1
+
+
+async def test_search_does_not_merge_two_mangadex_results_with_same_name(
+    mangadex_client, athrea_client
+):
+    mangadex_client.search_results = [
+        StandardizedSource(
+            name="Possessing My Venus",
+            cover_url=None,
+            authors=["Venus Author"],
+            source_id="mangadex-id",
+            source_type="MANGADEX",
+        ),
+        StandardizedSource(
+            name="Possessing My Venus",
+            cover_url=None,
+            authors=["Venus Author"],
+            source_id="other-mangadex-id",
+            source_type="MANGADEX",
+        ),
+    ]
+
+    grouped_results = await titles_controller.search_titles(
+        mangadex_client, athrea_client, "venus"
+    )
+
+    assert len(grouped_results) == 2

@@ -3,7 +3,7 @@ from asyncpg import Pool, Record
 from fastapi import Cookie, Depends, HTTPException, Request
 from redis.asyncio import Redis
 import utils
-from clients import AthreaClient, MangadexClient
+from clients import AthreaClient, MangadexClient, CoversClient
 from db import sessions_db, users_db
 
 
@@ -27,6 +27,10 @@ async def get_mangadex_client(request: Request) -> MangadexClient:
 
 async def get_athrea_client(request: Request) -> AthreaClient:
     return request.app.state.athrea_client
+
+
+async def get_covers_client(request: Request) -> CoversClient:
+    return request.app.state.covers_client
 
 
 async def get_current_user(

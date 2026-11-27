@@ -36,15 +36,21 @@ class MangadexClient:
 
     async def search(self, query: str) -> list[StandardizedSource]:
         response = await self._get(
-            "/manga", params={"title": query, "includes[]": "cover_art"}
+            "/manga", params={"title": query, "includes[]": ["cover_art", "author"]}
         )
         search_results = []
         for data in response["data"]:
             manga = Manga.model_validate(data)
+            author_results = []
+
+            for r in manga.relationships:
+                if r.type == "author" and r.attributes is not None:
+                    author_results.append(r.attributes["name"])
             search_results.append(
                 StandardizedSource(
                     name=manga.attributes.display_title,
                     cover_url=manga.cover_url,
+                    authors=author_results,
                     source_id=manga.id,
                     source_type="MANGADEX",
                 )

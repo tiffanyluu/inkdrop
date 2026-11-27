@@ -45,6 +45,7 @@ class AthreaClient:
                 StandardizedSource(
                     name=a["title"],
                     cover_url=a.select_one("img")["src"],
+                    authors=None,
                     source_id=a["href"].rstrip("/").split("/")[-1],
                     source_type="ATHREA",
                 )
@@ -56,10 +57,14 @@ class AthreaClient:
         soup = BeautifulSoup(html, "html.parser")
 
         status = None
+        author_results = []
         for row in soup.select("table.infotable tr"):
             cells = row.select("td")
             if cells[0].text.strip() == "Status":
                 status = cells[1].text.strip()
+            elif cells[0].text.strip() == "Author":
+                for name in cells[1].text.split(","):
+                    author_results.append(name.strip())
 
         latest_free_chapter = None
         latest_free_chapter_datetime = None
@@ -77,6 +82,7 @@ class AthreaClient:
         return AthreaSeries(
             name=soup.select_one("h1.entry-title").text.strip(),
             cover_url=soup.select_one("div.thumb img")["src"],
+            authors=author_results,
             status=status,
             description=soup.select_one("div.entry-content").text.strip(),
             latest_free_chapter=latest_free_chapter,

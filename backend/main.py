@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from asyncpg import create_pool
 from fastapi import FastAPI
 
-from clients import AthreaClient, MangadexClient
+from clients import AthreaClient, MangadexClient, CoversClient
 from config import get_settings
 from dependencies import DbPool
 from routes import (
@@ -11,6 +11,7 @@ from routes import (
     subscriptions_routes,
     titles_routes,
     notifications_routes,
+    covers_routes,
 )
 
 from redis.asyncio import Redis
@@ -25,7 +26,9 @@ async def lifespan(app: FastAPI):
     await app.state.redis.ping()
     app.state.mangadex_client = MangadexClient()
     app.state.athrea_client = AthreaClient()
+    app.state.covers_client = CoversClient()
     yield
+    await app.state.covers_client.close()
     await app.state.athrea_client.close()
     await app.state.mangadex_client.close()
     await app.state.redis.aclose()
@@ -38,6 +41,7 @@ app.include_router(titles_routes.router)
 app.include_router(auth_routes.router)
 app.include_router(subscriptions_routes.router)
 app.include_router(notifications_routes.router)
+app.include_router(covers_routes.router)
 
 
 @app.get("/health")

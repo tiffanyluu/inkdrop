@@ -65,6 +65,7 @@ class FakeAthreaClient:
     def __init__(self):
         self.latest_free_chapter = Decimal("31")
         self.search_results = []
+        self.authors = ["Venus Author"]
 
     async def search(self, query: str):
         return self.search_results
@@ -73,6 +74,7 @@ class FakeAthreaClient:
         return AthreaSeries(
             name="Possessing My Venus",
             cover_url="https://athreascans.com/cover.png",
+            authors=self.authors,
             status="Ongoing",
             description="A description",
             latest_free_chapter=self.latest_free_chapter,

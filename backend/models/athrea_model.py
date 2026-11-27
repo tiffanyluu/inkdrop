@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class AthreaSeries(BaseModel):
     name: str
     cover_url: str
+    authors: list[str]
     status: str
     description: str
     latest_free_chapter: Decimal | None
