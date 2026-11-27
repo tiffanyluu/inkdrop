@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import Signup from "./Signup";
-import Login from "./Login";
-import Search from "./Search";
+import Signup from "./components/Signup";
+import Login from "./components/Login";
+import Search from "./pages/Search";
 
 export interface User {
   user_public_id: string;
@@ -28,11 +28,7 @@ export default function App() {
       const data: User = await response.json();
       setUser(data);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -63,11 +59,7 @@ export default function App() {
       }
       setUser(null);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
