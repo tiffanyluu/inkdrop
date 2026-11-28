@@ -5,13 +5,14 @@ import Search from "./pages/Search";
 import Library from "./pages/Library";
 import Notifications from "./pages/Notifications";
 import { Routes, Route, Link } from "react-router";
-import type { User } from "./types";
+import type { UnseenCount, User } from "./types";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showSignup, setShowSignup] = useState<boolean>(false);
+  const [unseenCount, setUnseenCount] = useState<number>(0);
 
   const fetchUser = async () => {
     try {
@@ -60,9 +61,24 @@ export default function App() {
     }
   };
 
+  const fetchUnseenCount = async () => {
+    const response = await fetch("/api/notifications/unseen-count");
+    if (!response.ok) {
+      return;
+    }
+    const data: UnseenCount = await response.json();
+    setUnseenCount(data.count);
+  };
+
   useEffect(() => {
     fetchUser();
   }, []);
+
+  useEffect(() => {
+    if (user !== null) {
+      fetchUnseenCount();
+    }
+  }, [user]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -90,12 +106,17 @@ export default function App() {
       <nav>
         <Link to="/">Library</Link>
         <Link to="/search">Search</Link>
-        <Link to="/notifications">Notifications</Link>
+        <Link to="/notifications">
+          Notifications {unseenCount > 0 && `(${unseenCount})`}
+        </Link>
       </nav>
       <Routes>
         <Route path="/" element={<Library />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route
+          path="/notifications"
+          element={<Notifications onSeen={fetchUnseenCount} />}
+        />
         <Route path="*" element={<p>Page not found</p>} />
       </Routes>
       <button onClick={handleLogout}>Logout</button>
