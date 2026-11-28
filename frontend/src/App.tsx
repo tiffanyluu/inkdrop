@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import Search from "./pages/Search";
-import { Routes, Route } from "react-router";
+import Library from "./pages/Library";
+import Notifications from "./pages/Notifications";
+import { Routes, Route, Link } from "react-router";
 import type { User } from "./types";
 
 export default function App() {
@@ -85,8 +87,16 @@ export default function App() {
   return (
     <>
       <h1>Hi {user.first_name}</h1>
+      <nav>
+        <Link to="/">Library</Link>
+        <Link to="/search">Search</Link>
+        <Link to="/notifications">Notifications</Link>
+      </nav>
       <Routes>
-        <Route path="/" element={<Search />} />
+        <Route path="/" element={<Library />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="*" element={<p>Page not found</p>} />
       </Routes>
       <button onClick={handleLogout}>Logout</button>
     </>
