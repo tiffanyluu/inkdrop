@@ -1,14 +1,11 @@
 import { useState, useEffect } from "react";
-import Signup from "./Signup";
-import Login from "./Login";
-import Search from "./Search";
-
-export interface User {
-  user_public_id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-}
+import Signup from "./components/Signup";
+import Login from "./components/Login";
+import Search from "./pages/Search";
+import Library from "./pages/Library";
+import Notifications from "./pages/Notifications";
+import { Routes, Route, Link } from "react-router";
+import type { User } from "./types";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -28,11 +25,7 @@ export default function App() {
       const data: User = await response.json();
       setUser(data);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -63,11 +56,7 @@ export default function App() {
       }
       setUser(null);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
@@ -98,7 +87,17 @@ export default function App() {
   return (
     <>
       <h1>Hi {user.first_name}</h1>
-      <Search />
+      <nav>
+        <Link to="/">Library</Link>
+        <Link to="/search">Search</Link>
+        <Link to="/notifications">Notifications</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Library />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="*" element={<p>Page not found</p>} />
+      </Routes>
       <button onClick={handleLogout}>Logout</button>
     </>
   );
