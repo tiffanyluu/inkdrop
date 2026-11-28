@@ -17,3 +17,17 @@ export interface TitleResult {
   cover_url: string | null;
   sources: TitleSource[];
 }
+
+export type TitleStatus = "ONGOING" | "COMPLETED" | "HIATUS" | "CANCELED";
+
+export interface SubscriptionItem {
+  title_public_id: string;
+  title_name: string;
+  cover_url: string | null;
+  title_status: TitleStatus;
+  latest_read_chapter: string | null;
+  latest_free_chapter: string | null;
+  read_url: string | null;
+  subscription_public_id: string;
+  has_new_chapter: boolean;
+}
