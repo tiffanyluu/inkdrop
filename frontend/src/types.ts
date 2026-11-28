@@ -31,3 +31,16 @@ export interface SubscriptionItem {
   subscription_public_id: string;
   has_new_chapter: boolean;
 }
+
+export interface NotificationItem {
+  notification_public_id: string;
+  title_name: string;
+  cover_url: string | null;
+  chapter: string;
+  seen_datetime: string | null;
+  create_datetime: string;
+}
+
+export interface UnseenCount {
+  count: number;
+}
